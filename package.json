@@ -1,27 +1,27 @@
 {
-    "name":  "aku-ruo-uno-election",
-    "version":  "1.0.0",
-    "private":  true,
-    "type":  "module",
-    "scripts":  {
-                    "dev":  "vite",
-                    "start":  "node --env-file=.env backend/local.js",
-                    "build":  "vite build",
-                    "test":  "node --test",
-                    "dev:xampp":  "vite --base /voting/",
-                    "dev:all":  "concurrently \"node --env-file=.env backend/local.js\" \"vite --host 0.0.0.0\""
-                },
-    "dependencies":  {
-                         "@neondatabase/serverless":  "^1.0.2",
-                         "bcryptjs":  "^3.0.2",
-                         "cors":  "^2.8.5",
-                         "express":  "^5.1.0",
-                         "pg":  "^8.16.3",
-                         "react":  "^19.1.1",
-                         "react-dom":  "^19.1.1"
-                     },
-    "devDependencies":  {
-                            "vite":  "^7.1.7",
-                            "concurrently":  "^9.2.1"
-                        }
+  "name": "aku-ruo-uno-election",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node init && vite",
+    "start": "node init && node --env-file=.env backend/local.js",
+    "build": "node init && vite build",
+    "test": "node --test",
+    "dev:xampp": "node init && vite --base /voting/",
+    "dev:all": "node init && concurrently \"node --env-file=.env backend/local.js\" \"vite --host 0.0.0.0\""
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "^1.0.2",
+    "bcryptjs": "^3.0.2",
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "pg": "^8.16.3",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1"
+  },
+  "devDependencies": {
+    "vite": "^7.1.7",
+    "concurrently": "^9.2.1"
+  }
 }

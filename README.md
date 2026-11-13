@@ -29,6 +29,6 @@ Local `.data/election.json` contents are **not** copied to the Vercel database a
 
 When candidates tie on vote count, the candidate whose earliest supporting ballot was submitted first is selected. If timestamps match, stored ballot order breaks the tie. The results page identifies when this rule was used.
 
-After a ballot is recorded, participants can optionally share a Cyberlife Digital support message through WhatsApp. It does not include their ballot choices.
+After a ballot is recorded, participants can optionally share a Cyberlife Digital support message and promotional image through Facebook, X/Twitter, Instagram, TikTok, or WhatsApp. Image sharing uses the device share sheet when supported; otherwise participants can download the image and upload it in their social app. The message does not include ballot choices.
 
 The current duplicate-vote check uses a browser-stored device identifier, not verified voter identity. A voter can clear or change it, so this is not suitable for a binding election without member authentication or one-use voter codes, plus appropriate audit and recovery controls. Test the complete ballot, admin, results, and backup/recovery flows before opening voting.
