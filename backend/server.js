@@ -35,6 +35,28 @@ app.get('/api/admin/state',admin,async(_,res)=>{const s=await getState();res.jso
 app.put('/api/admin/state',admin,async(req,res)=>{const incoming=req.body;if(!incoming?.settings||!Array.isArray(incoming.positions)||incoming.positions.some(p=>!p.id||!p.name||!Array.isArray(p.candidates)))return res.status(400).json({error:'Election settings or positions are invalid.'});const {state}=await updateState(s=>{s.settings={...s.settings,...incoming.settings};s.positions=incoming.positions.map(p=>({...p,candidates:p.candidates.map(String).map(n=>n.trim()).filter(Boolean)}));s.manualVoterCount=Math.max(0,Number(incoming.manualVoterCount)||0)});res.json({...state,statistics:statistics(state)})});
 app.post('/api/admin/reset',admin,async(_,res)=>{const {state}=await updateState(s=>{s.votes=[];s.settings.winnersPublished=false});res.json({ok:true,statistics:statistics(state)})});
 app.get('/api/results',async(_,res)=>{const s=await getState();if(!s.settings.winnersPublished)return res.status(403).json({error:'Results have not been published.'});res.json({settings:s.settings,positions:s.positions,results:statistics(s).results})});
-function statistics(s){const total=s.votes.length;const results=s.positions.map(p=>{const counts=Object.fromEntries(p.candidates.map(c=>[c,0]));for(const v of s.votes){const c=v.choices[s.positions.findIndex(x=>x.id===p.id)];if(c in counts)counts[c]++}const max=Math.max(0,...Object.values(counts));const winners=max?Object.keys(counts).filter(c=>counts[c]===max):[];return {position:p.name,candidates:p.candidates.map(name=>({name,votes:counts[name],percent:total?Math.round(counts[name]/total*100):0})),winners,winningVotes:max}});return {totalVotes:total,manualVoterCount:s.manualVoterCount||0,expectedVoters:Number(s.settings.expectedVoters)||0,participation:Number(s.settings.expectedVoters)?Math.min(100,Math.round(total/s.settings.expectedVoters*100)):null,results}}
+export function statistics(s){
+  const total=s.votes.length;
+  const results=s.positions.map((p,positionIndex)=>{
+    const counts=Object.fromEntries(p.candidates.map(c=>[c,0]));
+    const firstVotes=Object.create(null);
+    for(let i=0;i<s.votes.length;i++){
+      const ballot=s.votes[i],candidate=ballot.choices?.[positionIndex];
+      if(!Object.hasOwn(counts,candidate))continue;
+      counts[candidate]++;
+      const parsed=Date.parse(ballot.submittedAt||''),timestamp=Number.isFinite(parsed)?parsed:Infinity;
+      const current=firstVotes[candidate];
+      if(!current||timestamp<current.timestamp||(timestamp===current.timestamp&&i<current.index))firstVotes[candidate]={timestamp,index:i};
+    }
+    const max=Math.max(0,...Object.values(counts));
+    const tiedCandidates=max?Object.keys(counts).filter(candidate=>counts[candidate]===max):[];
+    const tieBroken=tiedCandidates.length>1;
+    const winners=tieBroken
+      ?[...tiedCandidates].sort((a,b)=>{const firstA=firstVotes[a],firstB=firstVotes[b];if(firstA.timestamp!==firstB.timestamp)return firstA.timestamp<firstB.timestamp?-1:1;return firstA.index-firstB.index}).slice(0,1)
+      :tiedCandidates;
+    return {position:p.name,candidates:p.candidates.map(name=>({name,votes:counts[name],percent:total?Math.round(counts[name]/total*100):0})),winners,winningVotes:max,tieBroken};
+  });
+  return {totalVotes:total,manualVoterCount:s.manualVoterCount||0,expectedVoters:Number(s.settings.expectedVoters)||0,participation:Number(s.settings.expectedVoters)?Math.min(100,Math.round(total/s.settings.expectedVoters*100)):null,results};
+}
 app.use((error,req,res,next)=>{console.error('API request failed.',error);if(res.headersSent)return next(error);res.status(error instanceof StorageUnavailableError?503:500).json({error:error instanceof StorageUnavailableError?error.message:'The server could not process the request.'})});
 export default app;
