@@ -5,10 +5,10 @@
     "type":  "module",
     "scripts":  {
                     "dev":  "vite",
-                    "start":  "node api/server.js",
+                    "start":  "node --env-file=.env backend/local.js",
                     "build":  "vite build",
                     "dev:xampp":  "vite --base /voting/",
-                    "dev:all":  "concurrently \"node api/server.js\" \"vite --host 0.0.0.0\""
+                    "dev:all":  "concurrently \"node --env-file=.env backend/local.js\" \"vite --host 0.0.0.0\""
                 },
     "dependencies":  {
                          "@neondatabase/serverless":  "^1.0.2",

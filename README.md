@@ -1,25 +1,30 @@
-﻿# Aku Ruo Uno Club Elections
+# Aku Ruo Uno Club Elections
 
-React + Node voting app with a local JSON store for temporary development and PostgreSQL support for Vercel deployments.
+React + Express voting app. Local development uses a JSON file; Vercel deployments require PostgreSQL so election data persists across serverless instances.
 
 ## Run locally
 
-1. Install Node.js 20 or newer.
+1. Install Node.js 20.19 or newer.
 2. Run `npm install`.
-3. Copy `.env.example` to `.env` and set `ADMIN_PASSWORD` and a long random `SESSION_SECRET`.
-4. Run `npm run start` in one terminal (API on port 3001).
-5. Run `npm run dev` in another terminal (Vite on port 5173). Configure Vite proxy or use `VITE_API_URL=http://localhost:3001` in `.env.local`.
+3. Copy `.env.example` to `.env` and set `ADMIN_PASSWORD` and a unique, random `SESSION_SECRET`.
+4. Run `npm run dev:all` and open <http://localhost:5173/>.
 
-Local vote and election state are saved in `.data/election.json`.
+The local API runs on port 3001 and Vite proxies `/api` requests to it. Local election state is saved in `.data/election.json`.
 
 ## Deploy to Vercel
 
-1. Import this repository into Vercel. Build command: `npm run build`; output directory: `dist`.
-2. Add a PostgreSQL database through Vercel Marketplace (Neon or Supabase) and set `DATABASE_URL`.
-3. Set `ADMIN_PASSWORD` and a long random `SESSION_SECRET` in Vercel environment variables.
-4. Deploy. The API uses the Vercel function in `api/server.js`; the database is initialized on first request.
+1. Import the repository into Vercel using the project root. The build command is `npm run build`, and the output directory is `dist` (both are configured in `vercel.json`).
+2. Create and connect a PostgreSQL database through the Vercel Marketplace. Set `DATABASE_URL` to the database's pooled connection string.
+3. Add these environment variables in Vercel's project settings. Use a unique admin password of at least 12 characters and a unique session secret of at least 32 characters. Apply them to Production, and to Preview if you want preview deployments to use the API:
+   - `DATABASE_URL`: the PostgreSQL pooled connection string.
+   - `ADMIN_PASSWORD`: a strong, unique admin password.
+   - `SESSION_SECRET`: a unique random value. Generate one with `node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"`.
+4. Deploy. The first API request initializes the `election_state` table. Check `/api/health`; it should return `{"ok":true,"storage":"postgres"}`.
 
-Do not use local JSON mode for a public Vercel deployment: function filesystems are not durable. LocalStorage device identifiers provide a basic one-device duplicate check, not verified voter identity. For a binding election, add member authentication or one-use voter codes and audit controls before voting opens.
-# use "npm run dev:all" to start API and Vite together
+Do not set `VITE_API_URL` in Vercel for a same-domain deployment. Keep real credentials in Vercel's environment settings or a local `.env` file; never commit them. `.env.example` contains placeholders only.
 
-For XAMPP subpath testing, use npm run dev:xampp then open http://localhost:5173/voting/. For standard local development, use npm run dev:all and open http://localhost:5173/.
+Local `.data/election.json` contents are **not** copied to the Vercel database automatically. If you have existing ballots or settings to preserve, migrate them to PostgreSQL before directing voters to the deployment. Vercel's function filesystem is not durable, and the API refuses to use local JSON storage in Vercel.
+
+## Election limitations
+
+The current duplicate-vote check uses a browser-stored device identifier, not verified voter identity. A voter can clear or change it, so this is not suitable for a binding election without member authentication or one-use voter codes, plus appropriate audit and recovery controls. Test the complete ballot, admin, results, and backup/recovery flows before opening voting.
